@@ -34,7 +34,8 @@ def make_network():
     action = tf.placeholder('float', [None,6])
     action_readout = tf.reduce_sum(tf.mul(output, action), reduction_indices=1)
     loss = tf.reduce_mean(tf.square(tf.sub(action_readout, targets)))
-    train_operation = tf.train.AdamOptimizer(0.01).minimize(loss)
+    train_operation = tf.train.RMSPropOptimizer(0.002, decay=0.99, momentum=0.95, epsilon=0.001)\
+        .minimize(loss)
 
     return input, action, weights, targets, output, train_operation
 
@@ -46,7 +47,7 @@ def preprocess(obs):
     new_obs = np.array(img)
     return new_obs
 
-def train(input, action_one_hots, weights, targets, output, train_operation, num_episodes=1000, max_steps=800):
+def train(input, action_one_hots, weights, targets, output, train_operation, num_episodes=100000, max_steps=1000, prob=1.0):
     # Contains full training procedure. Main loop over num of episodes.
     # state will consist of previous 4 frames.
     # actions determined by eps. greedy policy w.r.t current Q-values
@@ -58,7 +59,6 @@ def train(input, action_one_hots, weights, targets, output, train_operation, num
     target_weights = session.run(weights)
     replay_memory = []
     episode_step_count = []
-    episode_count = 0
     total_steps = 0
 
     for episode in range(num_episodes):
@@ -69,16 +69,16 @@ def train(input, action_one_hots, weights, targets, output, train_operation, num
         obs1, obs2, obs3, obs4 = preprocess(obs1), preprocess(obs2), preprocess(obs3), preprocess(obs4)
         state = [obs1, obs2, obs3, obs4]
         state = np.transpose(state, (1, 2, 0))
-        print(np.shape(state))
         steps = 0
 
         for step in range(max_steps):
-            if random.random() > 0.1:
+            if random.random() > prob:
                 Q_vals = session.run(output, feed_dict={input: [state]})
                 action = Q_vals.argmax()
             else:
                 action = env.action_space.sample()
 
+            prob = update_randomness(prob)
             obs1 = obs2
             obs2 = obs3
             obs3 = obs4
@@ -88,7 +88,7 @@ def train(input, action_one_hots, weights, targets, output, train_operation, num
             new_state = np.transpose(new_state, (1, 2, 0))
 
             if done:
-                reward = -100
+                reward = -1
 
             replay_memory.append((state, action, reward, new_state, done))
             state = new_state
@@ -96,20 +96,20 @@ def train(input, action_one_hots, weights, targets, output, train_operation, num
             if len(replay_memory) > 10000:
                 replay_memory.pop(0)
 
-            if len(replay_memory) >= 50:
+            if len(replay_memory) >= 32:
                 # here is where the training procedure takes place
 
                 # compute the one step q-values w.r.t. old weights (ie y in the loss function (y-Q(s,a,0))^2)
                 # Also defines the one-hot readout action vectors
-                minibatch = random.sample(replay_memory, 50)
+                minibatch = random.sample(replay_memory, 32)
                 next_states = [m[3] for m in minibatch]
                 feed_dict = {input: next_states}
                 feed_dict.update(zip(weights, target_weights))
                 q_vals = session.run(output, feed_dict=feed_dict)
                 max_q = q_vals.max(axis=1)
-                target_q = np.zeros(50)
-                action_list = np.zeros((50,6))
-                for i in range(50):
+                target_q = np.zeros(32)
+                action_list = np.zeros((32,6))
+                for i in range(32):
                     _, action_index, reward, _, terminal = minibatch[i]
                     target_q[i] = reward
                     if not terminal:
@@ -127,12 +127,15 @@ def train(input, action_one_hots, weights, targets, output, train_operation, num
             if done:
                 break
 
+        if total_steps > 10000000:
+            break
+
         episode_step_count.append(steps)
         mean_steps = np.mean(episode_step_count[-100:])
         print("Training episode = {}, Total steps = {}, Last 100 mean steps = {}"
               .format(episode, total_steps, mean_steps))
 
-        if episode % 100 == 0:
+        if episode % 20 == 0:
             target_weights = session.run(weights)
 
 
@@ -143,10 +146,13 @@ def test_network():
     # record episode length
     return True
 
-def update_randomeness():
+def update_randomness(p):
     # can add this in if you want to anneal randomness. Without it we'll keep constant randomness .1
-    return True
+    p = .9999997*p
+    if p<0.1:
+        p=0.1
+    return p
 
 
-# i, a, w, t, o, tr = make_network()
-# train(i, a, w, t, o, tr)
+i, a, w, t, o, tr = make_network()
+train(i, a, w, t, o, tr)
