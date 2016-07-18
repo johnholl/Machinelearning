@@ -47,7 +47,7 @@ def preprocess(obs):
     new_obs = np.array(img)
     return new_obs
 
-def train(input, action_one_hots, weights, targets, output, train_operation, num_episodes=100000, max_steps=1000, prob=1.0):
+def train(input, action_one_hots, weights, targets, output, train_operation, num_episodes=1, max_steps=1000, prob=1.0):
     # Contains full training procedure. Main loop over num of episodes.
     # state will consist of previous 4 frames.
     # actions determined by eps. greedy policy w.r.t current Q-values
@@ -137,6 +137,10 @@ def train(input, action_one_hots, weights, targets, output, train_operation, num
 
         if episode % 20 == 0:
             target_weights = session.run(weights)
+
+    target_weights = session.run(weights)
+    np.save('weights', target_weights)
+
 
 
 
