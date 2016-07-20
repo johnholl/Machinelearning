@@ -3,164 +3,181 @@ import tensorflow as tf
 import numpy as np
 import random
 
-## The following is a 1 layer fully connected + softmax
-## neural net. As input it takes the 4 observation values of
-## the cartpole simulator and outputs 0 or 1 at each time
-## step, which controls left and right movement of the cart.
 
-class MC_Controller:
-    FUTURE_DISCOUNT = 0.99
-    RANDOM_ACTION_DECAY = 0.99
-    MIN_RANDOM_ACTION_PROBABILITY = 0.1
-    HIDDEN1_SIZE = 4
-    HIDDEN2_SIZE = 4
-    NUM_EPISODES = 200
-    MAX_STEPS = 300
-    LEARNING_RATE = 0.001
-    MINIBATCH_SIZE = 50
-    REG_FACTOR = 0.001
-    RANDOM_ACTION_PROBABILITY = 0.5
-    WEIGHT_UPDATE_FREQUENCY = 10
-    MEMORY = []
-    MEMORY_CAPACITY = 10000
-    LOG_DIR = '/tmp/MCController'
-
-    def __init__(self):
-        self.env = gym.make('MountainCar-v0')
-
-    def make_network(self):
-        # define input, output, weight, and bias variables for network
-        self.input = tf.placeholder("float", [None, 2])
-        self.layer_1_weights = tf.Variable(tf.truncated_normal([2, self.HIDDEN1_SIZE],stddev=0.01))
-        self.layer_1_biases = tf.Variable(tf.constant(0.01, shape=[self.HIDDEN1_SIZE]))
-        self.layer_2_weights = tf.Variable(tf.truncated_normal([self.HIDDEN1_SIZE, self.HIDDEN2_SIZE],stddev=0.01))
-        self.layer_2_biases = tf.Variable(tf.constant(0.01, shape=[self.HIDDEN2_SIZE]))
-        self.output_layer_weights = tf.Variable(tf.truncated_normal([self.HIDDEN2_SIZE, 3],stddev=0.01))
-        self.output_layer_biases = tf.Variable(tf.constant(0.01, shape=[3]))
+def policy():
+    with tf.variable_scope("policy"):
+        input = tf.placeholder("float",[None,2])
+        weight1 = tf.get_variable("policy_weight1",[2,6])
+        bias1 = tf.get_variable("policy_bias1", [6])
+        hidden1 = tf.nn.relu(tf.matmul(input, weight1) + bias1)
+        weight2 = tf.get_variable("policy_weight2", [6, 3])
+        bias2 = tf.get_variable("policy_bias2", [3])
+        actions = tf.placeholder("float", [None, 3])
+        adv = tf.placeholder("float", [None, 1])
+        output = tf.nn.softmax(tf.matmul(hidden1, weight2) + bias2)
+        good_probabilities = tf.reduce_sum(tf.mul(output, actions), reduction_indices=[1])
+        eligibility = tf.log(good_probabilities) * adv
+        loss = -tf.reduce_sum(eligibility)
+        train_optimizer = tf.train.RMSPropOptimizer(0.01).minimize(loss)
+        return input, output, actions, adv, train_optimizer
 
 
-        # define layers
-        self.hidden_layer_1 = tf.nn.tanh(tf.add(tf.matmul(self.input, self.layer_1_weights), self.layer_1_biases))
-        self.hidden_layer_2 = tf.nn.tanh(tf.add(tf.matmul(self.hidden_layer_1, self.layer_2_weights), self.layer_2_biases))
-        self.output = tf.add(tf.matmul(self.hidden_layer_2, self.output_layer_weights), self.output_layer_biases)
-        self.action = tf.placeholder("float", [None,3])
-        self.targets = tf.placeholder("float", [None])
+def value():
+    with tf.variable_scope("value"):
+        input = tf.placeholder("float",[None,2])
+        w1 = tf.get_variable("w1",[2,10])
+        b1 = tf.get_variable("b1",[10])
+        h1 = tf.nn.relu(tf.matmul(input,w1) + b1)
+        w2 = tf.get_variable("w2",[10,1])
+        b2 = tf.get_variable("b2",[1])
+        output = tf.matmul(h1,w2) + b2
+        targets = tf.placeholder("float",[None,1])
+        diffs = output - targets
+        loss = tf.nn.l2_loss(diffs)
+        train_optimizer = tf.train.AdamOptimizer(0.1).minimize(loss)
+        return input, output, targets, train_optimizer, loss
 
-        # weights and readout will be useful for calculations
-        self.weights = [self.layer_1_weights, self.layer_1_biases,
-                        self.layer_2_weights, self.layer_2_biases,
-                        self.output_layer_weights, self.output_layer_biases]
-        self.readout_action = tf.reduce_sum(tf.mul(self.output, self.action), reduction_indices=1)
+def update_randomness(expl):
+    expl *=.9977
+    if expl < 0.1:
+        expl = 0.1
 
-        # define loss and training method
-        self.loss = tf.reduce_mean(tf.square(tf.sub(self.readout_action,self.targets)))
-        for w in [self.layer_1_weights, self.layer_2_weights]:
-            self.loss+=self.REG_FACTOR*tf.reduce_sum(tf.square(w))
-        self.train_operation = tf.train.AdamOptimizer(self.LEARNING_RATE).minimize(self.loss)
+    return expl
 
-    # train will run a full episode of CartPole and construct a batch from it
-    # upon completion of the episode (or perhaps some # time steps at most), the
-    # network will train on the data
-    def train(self, num_episodes=NUM_EPISODES):
-        self.session=tf.Session()
 
-        # set up Tensorboard summary
-        tf.scalar_summary('loss', self.loss)
-        self.summary = tf.merge_all_summaries()
-        self.summary_writer = tf.train.SummaryWriter(self.LOG_DIR, self.session.graph)
+def run_episode(env, policy, value, sess, expl):
+    policy_input, policy_output, policy_actions, policy_adv, policy_optimizer = policy
+    value_input, value_output, value_targets, value_optimizer, value_loss = value
+    totalreward = 0
+    states = []
+    actions = []
+    adv = []
+    transitions = []
+    update_vals = []
 
-        self.session.run(tf.initialize_all_variables())
+    obs = env.reset()
+    for i in range(1000):
+        # calculate policy
+        state = np.expand_dims(obs, axis=0)
+        prob = sess.run(policy_output,feed_dict={policy_input: state})
+        exploration_coin = random.uniform(0,1)
+        if exploration_coin < expl:
+            action = random.choice([0, 1, 2])
 
-        total_steps = 0
-        episode_step_counts = []
-        target_weights = self.session.run(self.weights)
+        else:
+            policy_coin = random.uniform(0,1)
+            if policy_coin < prob[0][0]:
+                action = 0
+            elif policy_coin > prob[0][0] + prob[0][1]:
+                action = 2
+            else:
+                action = 1
 
-        for episode in range(num_episodes):
-            state = self.env.reset()
-            steps = 0
-            for step in range(self.MAX_STEPS):
-                if random.random() > self.RANDOM_ACTION_PROBABILITY:
-                    q_values = self.session.run(self.output, feed_dict={self.input: [state]})
-                    action =q_values.argmax()
-                else:
-                    action = self.env.action_space.sample()
+        states.append(obs)
+        action_one_hot = np.zeros(3)
+        action_one_hot[action] = 1.0
+        actions.append(action_one_hot)
+        # take the action in the environment
+        old_obs = obs
+        obs, reward, done, _ = env.step(action)
+        if done:
+            print("got to the finish line")
+            reward = 100
+        transitions.append((old_obs, action, reward))
+        totalreward += reward
 
-                self.update_policy_randomness()
-                obs, reward, done, info = self.env.step(action)
 
-                if done:
-                    reward = 100.0
+        if done:
+            break
+    for i1, trans in enumerate(transitions):
+        obs, action, reward = trans
 
-                self.MEMORY.append((state, action, reward, obs, done))
+        # calculate discounted monte-carlo return
+        future_reward = 0
+        future_transitions = len(transitions) - i1
+        discount = 1
+        for i2 in range(future_transitions):
+            future_reward += transitions[(i2) + i1][2] * discount
+            discount = discount * 0.99
+        state = np.expand_dims(obs, axis=0)
+        currentval = sess.run(value_output,feed_dict={value_input: state})[0][0]
 
-                if(len(self.MEMORY) > self.MEMORY_CAPACITY):
-                    self.MEMORY.pop(0)
+        adv.append(future_reward - currentval)
 
-                state = obs
+        # update the value function towards new return
+        update_vals.append(future_reward)
 
-                if(len(self.MEMORY) >= 50):
-                    minibatch = random.sample(self.MEMORY, 50)
-                    next_states = [m[3] for m in minibatch]
-                    feed_dict = {self.input: next_states}
-                    feed_dict.update(zip(self.weights, target_weights))
-                    q_values = self.session.run(self.output, feed_dict=feed_dict)
-                    max_q_values = q_values.max(axis=1)
+    # update value function
+    update_vals_vector = np.expand_dims(update_vals, axis=1)
+    sess.run(value_optimizer, feed_dict={value_input: states, value_targets: update_vals_vector})
 
-                    # compute target q values
-                    target_q_values = np.zeros(self.MINIBATCH_SIZE)
-                    action_list = np.zeros((self.MINIBATCH_SIZE,3))
-                    for i in range(self.MINIBATCH_SIZE):
-                        _, action, reward, _, terminal = minibatch[i]
-                        target_q_values[i] = reward
-                        if not terminal:
-                            target_q_values[i] += self.FUTURE_DISCOUNT*max_q_values[i]
-                        action_list[i][action] = 1.0
+    adv_vector = np.expand_dims(adv, axis=1)
+    sess.run(policy_optimizer, feed_dict={policy_input: states, policy_adv: adv_vector, policy_actions: actions})
 
-                    states = [m[0] for m in minibatch]
-                    self.session.run(self.train_operation, feed_dict={
-                        self.input: states,
-                        self.targets: target_q_values,
-                        self.action: action_list
-                    })
+    return totalreward
 
-                total_steps += 1
-                steps += 1
 
-                if done:
-                    break
+env = gym.make('MountainCar-v0')
 
-            episode_step_counts.append(steps)
-            mean_steps = np.mean(episode_step_counts[-100:])
-            print("Training episode = {}, Total steps = {}, Last-100 mean steps = {}"
-                  .format(episode, total_steps, mean_steps))
-
-            if episode % self.WEIGHT_UPDATE_FREQUENCY == 0:
-                target_weights = self.session.run(self.weights)
-
-    def update_policy_randomness(self):
-        self.RANDOM_ACTION_PROBABILITY *= self.RANDOM_ACTION_DECAY
-        if self.RANDOM_ACTION_PROBABILITY < self.MIN_RANDOM_ACTION_PROBABILITY:
-            self.RANDOM_ACTION_PROBABILITY = self.MIN_RANDOM_ACTION_PROBABILITY
-
-    def control(self):
-        state = self.env.reset()
+# env.monitor.start('mountaincar-hill/', force=True)
+policy = policy()
+value = value()
+sess = tf.InteractiveSession()
+sess.run(tf.initialize_all_variables())
+exploration = 0.5
+for i in range(10000):
+    reward = run_episode(env, policy, value, sess, exploration)
+    exploration = update_randomness(exploration)
+    print(i)
+    if i % 100 == 0:
+        # run an experiment
+        env.monitor.start('experiments', force=True)
+        obs = env.reset()
         done = False
-        steps = 0
-        while not done and steps < 200:
-            self.env.render()
-            q_values = self.session.run(self.output, feed_dict={self.input: [state]})
-            action = q_values.argmax()
-            state, _, done, _ = self.env.step(action)
-            steps += 1
-        return steps
+        for _ in range(1000):
+            # env.render()
+            state = np.expand_dims(obs, axis=0)
+            prob = sess.run(policy[1], feed_dict={policy[0]: state})
+            policy_coin = random.uniform(0,1)
+            if policy_coin < prob[0][0]:
+                action = 0
+            elif policy_coin > prob[0][0] + prob[0][1]:
+                action = 2
+            else:
+                action = 1
+
+            obs, _, done, _ = env.step(action)
 
 
-controller = MC_Controller()
-controller.make_network()
-controller.train()
+            if done:
+                env.reset()
 
-for i in range(100):
-    steps = controller.control()
-    print(steps)
+        env.monitor.close()
+
+done = False
+
+while not done:
+
+    obs = env.reset()
+    done = False
+    for _ in range(1000):
+        env.render()
+        state = np.expand_dims(obs, axis=0)
+        prob = sess.run(policy[1], feed_dict={policy[0]: state})
+        policy_coin = random.uniform(0,1)
+        if policy_coin < prob[0][0]:
+            action = 0
+        elif policy_coin > prob[0][0] + prob[0][1]:
+            action = 2
+        else:
+            action = 1
+
+        obs, reward, done, _ = env.step(action)
+        print(reward)
+
+
+
+
+
 
 
