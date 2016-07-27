@@ -2,15 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="8119d1b7-a1e6-4fff-9c09-ee97a3633971" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/MountainCar/experiments/openaigym.episode_batch.0.12026.stats.json" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/MountainCar/experiments/openaigym.manifest.0.12026.manifest.json" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/MountainCar/experiments/openaigym.video.0.12026.video000000.meta.json" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/MountainCar/experiments/openaigym.video.0.12026.video000000.mp4" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/MountainCar/experiments/openaigym.video.0.12026.video000001.meta.json" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/MountainCar/experiments/openaigym.video.0.12026.video000001.mp4" afterPath="" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/MountainCar/fully_connected_Q_learning.py" afterPath="$PROJECT_DIR$/MountainCar/policy_gradient.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/MountainCar/dqn.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Cartpole/CartPole_policy_gradient.py" afterPath="$PROJECT_DIR$/Cartpole/CartPole_policy_gradient.py" />
     </list>
     <ignored path="Machinelearning.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -43,14 +36,36 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="policy_gradient.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="policy_gradient.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/MountainCar/policy_gradient.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="3.8185744">
-              <caret line="119" column="12" selection-start-line="119" selection-start-column="12" selection-end-line="119" selection-end-column="12" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="133" column="22" selection-start-line="133" selection-start-column="22" selection-end-line="133" selection-end-column="22" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="dqn.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/MountainCar/dqn.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="2.722317">
+              <caret line="94" column="41" selection-start-line="94" selection-start-column="41" selection-end-line="94" selection-end-column="41" />
+              <folding>
+                <element signature="e#0#10#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="fully_connected_Q_learning.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Cartpole/fully_connected_Q_learning.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="10" column="17" selection-start-line="10" selection-start-column="17" selection-end-line="10" selection-end-column="17" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -72,21 +87,23 @@
       <list>
         <option value="$PROJECT_DIR$/Cartpole/CartPoleGuess.py" />
         <option value="$PROJECT_DIR$/Cartpole/BestGuessOneOutput.py" />
-        <option value="$PROJECT_DIR$/Cartpole/fully_connected_Q_learning.py" />
         <option value="$PROJECT_DIR$/Cartpole/ViswanathgsDQN.py" />
         <option value="$PROJECT_DIR$/Atari/Breakout_DQN.py" />
         <option value="$PROJECT_DIR$/Cartpole/kvfranspg.py" />
         <option value="$PROJECT_DIR$/MountainCar/fully_connected_Q_learning.py" />
         <option value="$PROJECT_DIR$/Cartpole/CartPole_policy_gradient.py" />
         <option value="$PROJECT_DIR$/MountainCar/policy_gradient.py" />
+        <option value="$PROJECT_DIR$/Cartpole/fully_connected_Q_learning.py" />
+        <option value="$PROJECT_DIR$/MountainCar/songrotek_dqn.py" />
+        <option value="$PROJECT_DIR$/MountainCar/dqn.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-1366" />
-    <option name="y" value="24" />
-    <option name="width" value="1366" />
-    <option name="height" value="744" />
+    <option name="x" value="-1325" />
+    <option name="y" value="82" />
+    <option name="width" value="1356" />
+    <option name="height" value="686" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
@@ -113,7 +130,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -162,29 +178,13 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="last_opened_file_path" value="$USER_HOME$" />
   </component>
-  <component name="RunManager" selected="Python.fully_connected_Q_learning">
-    <configuration default="false" name="fully_connected_Q_learning (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Cartpole" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="Machinelearning" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Cartpole/fully_connected_Q_learning.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <method />
-    </configuration>
+  <component name="RunManager" selected="Python.songrotek_dqn">
     <configuration default="false" name="Breakout_DQN" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -249,6 +249,23 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="Machinelearning" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Cartpole/CartPole_policy_gradient.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <method />
+    </configuration>
+    <configuration default="false" name="songrotek_dqn" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/MountainCar" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="Machinelearning" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/MountainCar/dqn.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <method />
@@ -376,19 +393,19 @@
       <method />
     </configuration>
     <list size="5">
-      <item index="0" class="java.lang.String" itemvalue="Python.fully_connected_Q_learning (1)" />
-      <item index="1" class="java.lang.String" itemvalue="Python.Breakout_DQN" />
-      <item index="2" class="java.lang.String" itemvalue="Python.kvfranspg" />
-      <item index="3" class="java.lang.String" itemvalue="Python.fully_connected_Q_learning" />
-      <item index="4" class="java.lang.String" itemvalue="Python.CartPole_policy_gradient" />
+      <item index="0" class="java.lang.String" itemvalue="Python.Breakout_DQN" />
+      <item index="1" class="java.lang.String" itemvalue="Python.kvfranspg" />
+      <item index="2" class="java.lang.String" itemvalue="Python.fully_connected_Q_learning" />
+      <item index="3" class="java.lang.String" itemvalue="Python.CartPole_policy_gradient" />
+      <item index="4" class="java.lang.String" itemvalue="Python.songrotek_dqn" />
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="Python.fully_connected_Q_learning" />
-        <item index="1" class="java.lang.String" itemvalue="Python.CartPole_policy_gradient" />
-        <item index="2" class="java.lang.String" itemvalue="Python.kvfranspg" />
-        <item index="3" class="java.lang.String" itemvalue="Python.Breakout_DQN" />
-        <item index="4" class="java.lang.String" itemvalue="Python.fully_connected_Q_learning (1)" />
+        <item index="0" class="java.lang.String" itemvalue="Python.songrotek_dqn" />
+        <item index="1" class="java.lang.String" itemvalue="Python.fully_connected_Q_learning" />
+        <item index="2" class="java.lang.String" itemvalue="Python.CartPole_policy_gradient" />
+        <item index="3" class="java.lang.String" itemvalue="Python.kvfranspg" />
+        <item index="4" class="java.lang.String" itemvalue="Python.Breakout_DQN" />
       </list>
     </recent_temporary>
   </component>
@@ -397,13 +414,13 @@
     <configuration />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1366" y="24" width="1366" height="744" extended-state="6" />
+    <frame x="-1325" y="82" width="1356" height="686" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24274014" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24456114" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.22700296" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32937685" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.27002966" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.29545453" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -429,11 +446,31 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="2" />
+      <option name="time" value="3" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/Cartpole/CartPole_policy_gradient.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="115" column="0" selection-start-line="115" selection-start-column="0" selection-end-line="115" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/MountainCar/policy_gradient.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/MountainCar/policy_gradient.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -616,13 +653,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Cartpole/fully_connected_Q_learning.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.3327869">
-          <caret line="71" column="33" selection-start-line="71" selection-start-column="28" selection-end-line="71" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/gym/gym/envs/registration.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.14883721">
@@ -644,16 +674,31 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="73" column="26" selection-start-line="73" selection-start-column="18" selection-end-line="73" selection-end-column="26" />
-          <folding>
-            <element signature="e#0#10#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/MountainCar/policy_gradient.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="3.8185744">
-          <caret line="119" column="12" selection-start-line="119" selection-start-column="12" selection-end-line="119" selection-end-column="12" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="133" column="22" selection-start-line="133" selection-start-column="22" selection-end-line="133" selection-end-column="22" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Cartpole/fully_connected_Q_learning.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="10" column="17" selection-start-line="10" selection-start-column="17" selection-end-line="10" selection-end-column="17" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/MountainCar/dqn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="2.722317">
+          <caret line="94" column="41" selection-start-line="94" selection-start-column="41" selection-end-line="94" selection-end-column="41" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
