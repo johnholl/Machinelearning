@@ -3,22 +3,24 @@ import tensorflow as tf
 import numpy as np
 import random
 
-
 def policy():
     with tf.variable_scope("policy"):
         input = tf.placeholder("float",[None,2])
-        weight1 = tf.get_variable("policy_weight1",[2,6])
-        bias1 = tf.get_variable("policy_bias1", [6])
+        weight1 = tf.get_variable("policy_weight1",[2,10])
+        bias1 = tf.get_variable("policy_bias1", [10])
         hidden1 = tf.nn.relu(tf.matmul(input, weight1) + bias1)
-        weight2 = tf.get_variable("policy_weight2", [6, 3])
-        bias2 = tf.get_variable("policy_bias2", [3])
+        weight2 = tf.get_variable("policy_weight2", [10,10])
+        bias2 = tf.get_variable("policy_bias2", [10])
+        hidden2 = tf.nn.relu(tf.matmul(hidden1, weight2) + bias2)
+        weight3 = tf.get_variable("policy_weight3", [10, 3])
+        bias3 = tf.get_variable("policy_bias3", [3])
         actions = tf.placeholder("float", [None, 3])
         adv = tf.placeholder("float", [None, 1])
-        output = tf.nn.softmax(tf.matmul(hidden1, weight2) + bias2)
+        output = tf.nn.softmax(tf.matmul(hidden2, weight3) + bias3)
         good_probabilities = tf.reduce_sum(tf.mul(output, actions), reduction_indices=[1])
-        eligibility = tf.log(good_probabilities) * adv
-        loss = -tf.reduce_sum(eligibility)
-        train_optimizer = tf.train.RMSPropOptimizer(0.01).minimize(loss)
+        eligibility = -tf.log(good_probabilities) * adv
+        loss = tf.reduce_sum(eligibility)
+        train_optimizer = tf.train.AdamOptimizer(0.01).minimize(loss)
         return input, output, actions, adv, train_optimizer
 
 
@@ -28,19 +30,23 @@ def value():
         w1 = tf.get_variable("w1",[2,10])
         b1 = tf.get_variable("b1",[10])
         h1 = tf.nn.relu(tf.matmul(input,w1) + b1)
-        w2 = tf.get_variable("w2",[10,1])
-        b2 = tf.get_variable("b2",[1])
-        output = tf.matmul(h1,w2) + b2
+        w2 = tf.get_variable("w2", [10,10])
+        b2 = tf.get_variable("b2", [10])
+        h2 = tf.nn.relu(tf.matmul(h1, w2) + b2)
+        w3 = tf.get_variable("w3",[10,1])
+        b3 = tf.get_variable("b3",[1])
+        output = tf.nn.relu(tf.matmul(h2,w3) + b3)
         targets = tf.placeholder("float",[None,1])
         diffs = output - targets
         loss = tf.nn.l2_loss(diffs)
-        train_optimizer = tf.train.AdamOptimizer(0.1).minimize(loss)
+        train_optimizer = tf.train.AdamOptimizer(0.01).minimize(loss)
         return input, output, targets, train_optimizer, loss
 
+
 def update_randomness(expl):
-    expl *=.9977
-    if expl < 0.1:
-        expl = 0.1
+    expl *=.99
+    if expl < 0.05:
+        expl = 0.05
 
     return expl
 
@@ -56,7 +62,7 @@ def run_episode(env, policy, value, sess, expl):
     update_vals = []
 
     obs = env.reset()
-    for i in range(1000):
+    for i in range(5000):
         # calculate policy
         state = np.expand_dims(obs, axis=0)
         prob = sess.run(policy_output,feed_dict={policy_input: state})
@@ -82,7 +88,6 @@ def run_episode(env, policy, value, sess, expl):
         obs, reward, done, _ = env.step(action)
         if done:
             print("got to the finish line")
-            reward = 100
         transitions.append((old_obs, action, reward))
         totalreward += reward
 
@@ -112,7 +117,8 @@ def run_episode(env, policy, value, sess, expl):
     sess.run(value_optimizer, feed_dict={value_input: states, value_targets: update_vals_vector})
 
     adv_vector = np.expand_dims(adv, axis=1)
-    sess.run(policy_optimizer, feed_dict={policy_input: states, policy_adv: adv_vector, policy_actions: actions})
+    if i % 20 == 0:
+        sess.run(policy_optimizer, feed_dict={policy_input: states, policy_adv: adv_vector, policy_actions: actions})
 
     return totalreward
 
