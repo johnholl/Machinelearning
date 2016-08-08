@@ -169,7 +169,7 @@ class Controller:
 
 controller = Controller()
 controller.make_network()
-controller.env.monitor.start('/tmp/cartpole', force=True)
+controller.env.monitor.start('/tmp/mountaincar', force=True)
 controller.train()
 controller.env.monitor.close()
 
