@@ -4,15 +4,21 @@ import random
 import gym
 import matplotlib.pyplot as plt
 
+tf.train.Optimizer
+
 variance = 1.0
 
 def policy_gradient():
     with tf.variable_scope("policy"):
-        params = tf.get_variable("policy_mean_parameters",[11,1])
+        policy_w1 = tf.get_variable("policy_layer1_weights",[11,10])
+        policy_b1 = tf.get_variable("policy_layer1_bias", [10])
+        policy_w2 = tf.get_variable("policy_layer2_weights", [10, 1])
+        policy_b2 = tf.get_variable("policy_layer2_bias", [1])
         state = tf.placeholder("float",[None,11])
         actions = tf.placeholder("float",[None,1])
         advantages = tf.placeholder("float", [None,1])
-        mean = tf.matmul(state,params)
+        layer1 = tf.nn.relu(tf.matmul(state, policy_w1) + policy_b1)
+        mean = tf.matmul(layer1, policy_w2) + policy_b2
         eligibility = -tf.div(tf.square(actions - mean), 2.0*tf.square(variance)) * advantages
         loss = -tf.reduce_sum(eligibility)
         optimizer = tf.train.AdamOptimizer(0.01).minimize(loss)
@@ -112,7 +118,7 @@ avgs = [0]
 
 
 
-for i in range(2000):
+for i in range(20000):
     reward, k = run_episode(env, policy_grad, value_grad, sess)
     # writer.add_summary(tb_summary, global_step=i)
     print('episode {} ran for {} steps and received a total reward of {}'.format(i, k, reward))
