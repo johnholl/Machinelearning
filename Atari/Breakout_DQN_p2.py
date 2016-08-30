@@ -82,6 +82,7 @@ target_weights = session.run(weights)
 replay_memory = []
 episode_step_count = []
 total_steps = 0
+prob = 1.0
 
 for episode in range(100):
     obs1 = env.reset()
@@ -89,10 +90,8 @@ for episode in range(100):
     obs3 = env.step(env.action_space.sample())[0]
     obs4, _, done, _ = env.step(env.action_space.sample())
     obs1, obs2, obs3, obs4 = preprocess(obs1), preprocess(obs2), preprocess(obs3), preprocess(obs4)
-    state = [obs1, obs2, obs3, obs4]
-    state = np.transpose(state, (1, 2, 0))
+    state = np.transpose([obs1, obs2, obs3, obs4], (1, 2, 0))
     steps = 0
-    prob = 1.0
 
     while not done:
         if random.random() > prob:
@@ -107,8 +106,7 @@ for episode in range(100):
         obs3 = obs4
         obs4, reward, done, info = env.step(action)
         obs4 = preprocess(obs4)
-        new_state = [obs1, obs2, obs3, obs4]
-        new_state = np.transpose(new_state, (1, 2, 0))
+        new_state = np.transpose([obs1, obs2, obs3, obs4], (1, 2, 0))
 
         if done:
             reward = -1
@@ -116,7 +114,7 @@ for episode in range(100):
         replay_memory.append((state, action, reward, new_state, done))
         state = new_state
 
-        if len(replay_memory) > 10000:
+        if len(replay_memory) > 3000000:
             replay_memory.pop(0)
 
         if len(replay_memory) >= 32:
@@ -161,8 +159,11 @@ for episode in range(100):
     if episode % 20 == 0:
         target_weights = session.run(weights)
 
+    if episode % 500000 == 0:
+        np.save('weights_' + str(episode), target_weights)
+
 target_weights = session.run(weights)
-np.save('weights', target_weights)
+np.save('weights_final', target_weights)
 
 
 
