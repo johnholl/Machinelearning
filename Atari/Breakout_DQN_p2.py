@@ -28,12 +28,12 @@ def preprocess(obs):
 
 
 def weight_variable(shape, name):
-    initial = tf.zeros(shape)
+    initial = tf.random_normal(shape, stddev=0.01)
     return tf.Variable(initial, name=name)
 
 
 def bias_variable(shape, name):
-    initial = tf.constant(0.0, shape=shape)
+    initial = tf.constant(0.1, shape=shape, name=name)
     return tf.Variable(initial)
 
 
@@ -62,17 +62,19 @@ target = tf.placeholder(tf.float32, None)
 action_hot = tf.placeholder('float', [None,6])
 action_readout = tf.reduce_sum(tf.mul(output, action_hot), reduction_indices=1)
 loss = tf.reduce_mean(tf.square(tf.sub(action_readout, target)))
-train_operation = tf.train.RMSPropOptimizer(0.001, decay=0.9).minimize(loss)
+train_operation = tf.train.RMSPropOptimizer(0.00025, decay=0.95, epsilon=1e-6).minimize(loss)
 
 weights = [conv1_weight, conv1_bias, conv2_weight, conv2_bias, fc1_weight, fc1_bias, fc2_weight, fc2_bias]
 
 ### Describe the main training loop ###
 
 # helper function that anneals randomness over first million time steps
+
+
 def update_randomness(p):
-    p = .9999997*p
-    if p<0.1:
-        p=0.1
+    p = p - .9e-7
+    if p < 0.1:
+        p = 0.1
     return p
 
 env = gym.make('Breakout-v0')
@@ -84,7 +86,7 @@ episode_step_count = []
 total_steps = 0
 prob = 1.0
 
-for episode in range(100):
+for episode in range(1000000):
     obs1 = env.reset()
     obs2 = env.step(env.action_space.sample())[0]
     obs3 = env.step(env.action_space.sample())[0]
@@ -104,9 +106,17 @@ for episode in range(100):
         obs1 = obs2
         obs2 = obs3
         obs3 = obs4
-        obs4, reward, done, info = env.step(action)
-        obs4 = preprocess(obs4)
+        new_obs1, reward1, _, _ = env.step(action)
+        new_obs2, reward2, _, _ = env.step(action)
+        new_obs3, reward3,  _, _ = env.step(action)
+        new_obs4, reward4, done, _ = env.step(action)
+        obs1 = preprocess(new_obs1)
+        obs2 = preprocess(new_obs2)
+        obs3 = preprocess(new_obs3)
+        obs4 = preprocess(new_obs4)
         new_state = np.transpose([obs1, obs2, obs3, obs4], (1, 2, 0))
+
+        reward = reward1 + reward2 + reward3 + reward4
 
         if done:
             reward = -1
@@ -114,10 +124,10 @@ for episode in range(100):
         replay_memory.append((state, action, reward, new_state, done))
         state = new_state
 
-        if len(replay_memory) > 3000000:
+        if len(replay_memory) > 1000000:
             replay_memory.pop(0)
 
-        if len(replay_memory) >= 32:
+        if len(replay_memory) >= 50000 and total_steps % 16 == 0:
             # here is where the training procedure takes place
 
             # compute the one step q-values w.r.t. old weights (ie y in the loss function (y-Q(s,a,0))^2)
@@ -134,7 +144,7 @@ for episode in range(100):
                 _, action_index, reward, _, terminal = minibatch[i]
                 target_q[i] = reward
                 if not terminal:
-                    target_q[i] =+ 0.99*max_q[i]
+                    target_q[i] = target_q[i]+ 0.99*max_q[i]
 
                 action_list[i][action_index] = 1.0
 
@@ -142,28 +152,36 @@ for episode in range(100):
             feed_dict = {input: states, target: target_q, action_hot: action_list}
             session.run(train_operation, feed_dict=feed_dict)
 
-        total_steps += 1
-        steps += 1
+
+
+        if total_steps % 10000 == 0:
+            target_weights = session.run(weights)
+            print(target_weights[0][0])
+
+        if total_steps % 500000 == 0:
+            np.save('weights_' + str(int(total_steps/500000)), target_weights)
+
+        total_steps += 4
+        steps += 4
 
         if done:
             break
 
-    if total_steps > 10000000:
+    if total_steps > 40000000:
         break
+
+
 
     episode_step_count.append(steps)
     mean_steps = np.mean(episode_step_count[-100:])
     print("Training episode = {}, Total steps = {}, Last 100 mean steps = {}"
           .format(episode, total_steps, mean_steps))
 
-    if episode % 20 == 0:
-        target_weights = session.run(weights)
 
-    if episode % 500000 == 0:
-        np.save('weights_' + str(episode), target_weights)
 
 target_weights = session.run(weights)
 np.save('weights_final', target_weights)
+
 
 
 
