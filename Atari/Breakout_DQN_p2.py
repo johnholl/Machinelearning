@@ -5,6 +5,8 @@ import random
 from PIL import Image
 
 
+
+
 def preprocess(obs):
     img = Image.fromarray(obs, 'RGB')
     img = img.convert('L')
@@ -27,14 +29,21 @@ def preprocess(obs):
 # defining helper functions
 
 
-def weight_variable(shape, name):
-    initial = tf.random_normal(shape, stddev=0.01)
-    return tf.Variable(initial, name=name)
+def weight_variable(shape, name, initial_weight):
+    if initial_weight is None:
+        initial = tf.random_normal(shape, stddev=0.01)
+        return tf.Variable(initial, name=name)
+    else:
+        return tf.Variable(initial_weight, name=name)
 
 
-def bias_variable(shape, name):
-    initial = tf.constant(0.1, shape=shape, name=name)
-    return tf.Variable(initial)
+
+def bias_variable(shape, name, initial_weight):
+    if initial_weight is None:
+        initial = tf.constant(0.1, shape=shape, name=name)
+        return tf.Variable(initial)
+    else:
+        return tf.Variable(initial_weight, name=name)
 
 
 def conv2d(x, W, stride):
