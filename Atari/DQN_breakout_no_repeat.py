@@ -36,7 +36,7 @@ def update_randomness(p):
 # takes in current state and exploration probability. Uses network to estimate
 # Q values and take an action (repeated over 4 steps). the reward is the sum of
 # rewards over these 4 steps. Returns the new probability, state, and reward observed
-def true_step(prob, state, session, env):
+def true_step(prob, state, obs2, obs3, obs4, session, env):
 
     Q_vals = session.run(output, feed_dict={input: [state]})
     if random.random() > prob:
@@ -45,29 +45,23 @@ def true_step(prob, state, session, env):
         action = env.action_space.sample()
 
     prob = update_randomness(prob)
-    new_obs1, reward1, _, _ = env.step(action)
-    new_obs2, reward2, _, _ = env.step(action)
-    new_obs3, reward3,  _, _ = env.step(action)
-    new_obs4, reward4, done, _ = env.step(action)
-    obs1 = preprocess(new_obs1)
-    obs2 = preprocess(new_obs2)
-    obs3 = preprocess(new_obs3)
-    obs4 = preprocess(new_obs4)
-    new_state = np.transpose([obs1, obs2, obs3, obs4], (1, 2, 0))
+    new_obs, reward, done, _ = env.step(action)
 
-    reward = reward1 + reward2 + reward3 + reward4
+    processed_obs = preprocess(new_obs)
+    new_state = np.transpose([obs2, obs3, obs4, processed_obs], (1, 2, 0))
 
-    if done:
-        reward -= 1
+    # if done:
+    #     reward -= 1
 
-    return prob, action, reward, new_state, Q_vals.max(), done
+    return prob, action, reward, new_state, obs2, obs3, obs4, processed_obs, Q_vals.max(), done
 
 
 def test_network(session):
-    env = gym.make('Breakout-v0')
+    env = gym.make('Breakout-4skips-v0')
     total_reward = 0.
     total_steps = 0.
     Q_avg_total = 0.
+    max_reward = 0.
     for ep in range(20):
         obs1 = env.reset()
         obs2 = env.step(env.action_space.sample())[0]
@@ -80,12 +74,14 @@ def test_network(session):
         ep_Q_total = 0.
         done = False
         while not done:
-            _, action, reward, new_state, Qval, done = true_step(0.03, state, session, env)
+            _, action, reward, new_state, obs1, obs2, obs3, obs4, Qval, done =\
+                true_step(0.05, state, obs2, obs3, obs4, session, env)
             state = new_state
-            episode_reward += reward*(DISCOUNT)**num_steps
+            episode_reward += reward
             num_steps += 1.
             ep_Q_total += Qval
-
+        print("end of ep")
+        max_reward = max(episode_reward, max_reward)
         ep_Q_avg = ep_Q_total/num_steps
         Q_avg_total += ep_Q_avg
         total_reward += episode_reward
@@ -97,10 +93,11 @@ def test_network(session):
     print("Average Q-value: {}".format(avg_Q))
     print("Average episode reward: {}".format(avg_reward))
     print("Average number of steps: {}".format(avg_steps))
+    print("Max reward over 20 episodes: {}".format(max_reward))
 
 
     # Now we want to plot these 3 values against the total step count
-    return avg_Q, avg_reward, avg_steps
+    return avg_Q, avg_reward, max_reward, avg_steps
 
 
 def weight_variable(shape, name, initial_weight=None):
@@ -152,7 +149,7 @@ weights = [conv1_weight, conv1_bias, conv2_weight, conv2_bias, fc1_weight, fc1_b
 
 ### Describe the main training loop ###
 
-env = gym.make('Breakout-v2')
+env = gym.make('Breakout-4skips-v0')
 session = tf.Session()
 session.run(tf.initialize_all_variables())
 target_weights = session.run(weights)
@@ -172,7 +169,8 @@ for episode in range(1000000):
     steps = 0
 
     while not done:
-        prob, action, reward, new_state, _, done = true_step(prob, state, session, env)
+        prob, action, reward, new_state, obs1, obs2, obs3, obs4, _, done =\
+            true_step(prob, state, obs2, obs3, obs4, session, env)
         replay_memory.append((state, action, reward, new_state, done))
         state = new_state
 
@@ -205,8 +203,8 @@ for episode in range(1000000):
 
         if total_steps % 10000 == 0:
             target_weights = session.run(weights)
-            avg_Q, avg_rewards, avg_steps = test_network(session)
-            learning_data.append([total_steps, avg_Q, avg_rewards, avg_steps])
+            avg_Q, avg_rewards, max_reward, avg_steps = test_network(session)
+            learning_data.append([total_steps, avg_Q, avg_rewards, max_reward, avg_steps])
             np.save('graph_data', learning_data)
 
         if total_steps % 500000 == 0:
